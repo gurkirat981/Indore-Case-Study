@@ -26,9 +26,12 @@ library(gridExtra)
 library(grid)
 library(ggpubr)
 library(kableExtra)
+library (readxl)
 ```
 
 ```{r}
-#Swachh Survekshan Scores across citites
+#importing data
+sscities <- read_csv("sscities_with_revenue.csv", col_names = TRUE)
+asics_exp <- read_excel("Municipal Expenditures (2015-2016).xlsx")
 ```
 
