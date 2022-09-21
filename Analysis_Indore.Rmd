@@ -1,0 +1,34 @@
+---
+title: "Indore Case Study"
+author: "Gurkirat"
+date: "9/21/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE} 
+knitr::opts_chunk$set(echo = FALSE)
+library(cowplot)
+library(tidyverse)
+library(ggplot2)
+library(MASS)
+library(ggrepel)
+library(RColorBrewer)
+library(stargazer)
+library(DeclareDesign)
+library(texreg)
+library(car)
+library(lubridate)
+library(scales)
+library(cowplot)
+library(writexl)
+library(janitor)
+library(gridExtra)
+library(grid)
+library(ggpubr)
+library(kableExtra)
+```
+
+```{r}
+#Swachh Survekshan Scores across citites
+```
+
