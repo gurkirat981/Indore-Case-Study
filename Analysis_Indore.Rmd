@@ -35,3 +35,24 @@ sscities <- read_csv("sscities_with_revenue.csv", col_names = TRUE)
 asics_exp <- read_excel("Municipal Expenditures (2015-2016).xlsx")
 ```
 
+
+```{r}
+ss <- sscities %>% 
+  mutate(city = as.factor(city)) %>% 
+  mutate(year = as.factor(year)) %>% 
+  filter(!is.na(total)) %>% 
+  filter(pop2011>100000) %>% 
+  mutate(logrevpc = log(rev_per_capita))
+
+#Generate new variables to use for analysis 
+ss <- ss %>% 
+  mutate(n_servicelevel = ifelse(year==2016, servicelevel/10, ifelse(year==2017, servicelevel/9, ifelse(year==2018, servicelevel/14, ifelse(year==2019, servicelevel/12.5, ifelse(year==2020, servicelevel/15, NA)))))) %>% 
+  mutate(n_observation = ifelse(year==2016, observation/5, ifelse(year==2017, observation/5, ifelse(year==2018, observation/12, ifelse(year==2019, observation/12.5, ifelse(year==2020, observation/15, NA)))))) %>% 
+  mutate(n_feedback = ifelse(year==2016, feedback/5, ifelse(year==2017, feedback/6, ifelse(year==2018, feedback/14, ifelse(year==2019, feedback/12.5, ifelse(year==2020, feedback/15, NA)))))) %>% 
+  mutate(n_total = ifelse(year==2016, total/20, ifelse(year==2017, total/20, ifelse(year==2018, total/40, ifelse(year==2019, total/50, ifelse(year==2020, total/60, NA)))))) %>% 
+  mutate(certification = ifelse(year==2019|2020, certification, 0)) %>% 
+  mutate(n_certification = ifelse(year==2019, certification/12.5, ifelse(year==2020, certification/15, NA))) 
+
+
+```
+
