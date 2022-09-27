@@ -27,6 +27,7 @@ library(grid)
 library(ggpubr)
 library(kableExtra)
 library (readxl)
+library (ggrepel)
 ```
 
 ```{r}
@@ -35,6 +36,14 @@ sscities <- read_csv("sscities_with_revenue.csv", col_names = TRUE)
 asics_exp <- read_excel("Municipal Expenditures (2015-2016).xlsx")
 ```
 
+```{r}
+##Theme
+newtheme <- theme_bw() +
+  theme(panel.border = element_rect(color = "darkgrey", size = 2), 
+        panel.grid.major = element_blank()
+        
+        )
+```
 
 ```{r}
 ss <- sscities %>% 
@@ -52,7 +61,74 @@ ss <- ss %>%
   mutate(n_total = ifelse(year==2016, total/20, ifelse(year==2017, total/20, ifelse(year==2018, total/40, ifelse(year==2019, total/50, ifelse(year==2020, total/60, NA)))))) %>% 
   mutate(certification = ifelse(year==2019|2020, certification, 0)) %>% 
   mutate(n_certification = ifelse(year==2019, certification/12.5, ifelse(year==2020, certification/15, NA))) 
+```
 
+```{r}
+##Cities by Population size
+ss <- ss %>% 
+mutate(city_size = ifelse(pop2011 > 100000 & pop2011 < 300000, "Small Cities", ifelse(pop2011 > 300000 & pop2011 < 1000000, "Medium Cities", "Big Cities")))
+
+##Calculating means
+
+###Small Cities
+mean_small_2016 <- mean(ss$n_total[ss$city_size == "Small Cities" & ss$year == 2016])
+mean_small_2017 <- mean(ss$n_total[ss$city_size == "Small Cities" & ss$year == 2017])
+mean_small_2018 <- mean(ss$n_total[ss$city_size == "Small Cities" & ss$year == 2018])
+mean_small_2019 <- mean(ss$n_total[ss$city_size == "Small Cities" & ss$year == 2019])
+mean_small_2020 <- mean(ss$n_total[ss$city_size == "Small Cities" & ss$year == 2020])
+
+##Medium Cities
+mean_medium_2016 <- mean(ss$n_total[ss$city_size == "Medium Cities" & ss$year == 2016])
+mean_medium_2017 <- mean(ss$n_total[ss$city_size == "Medium Cities" & ss$year == 2017])
+mean_medium_2018 <- mean(ss$n_total[ss$city_size == "Medium Cities" & ss$year == 2018])
+mean_medium_2019 <- mean(ss$n_total[ss$city_size == "Medium Cities" & ss$year == 2019])
+mean_medium_2020 <- mean(ss$n_total[ss$city_size == "Medium Cities" & ss$year == 2020])
+
+##Big Cities
+mean_Big_2016 <- mean(ss$n_total[ss$city_size == "Big Cities" & ss$year == 2016])
+mean_Big_2017 <- mean(ss$n_total[ss$city_size == "Big Cities" & ss$year == 2017])
+mean_Big_2018 <- mean(ss$n_total[ss$city_size == "Big Cities" & ss$year == 2018])
+mean_Big_2019 <- mean(ss$n_total[ss$city_size == "Big Cities" & ss$year == 2019])
+mean_Big_2020 <- mean(ss$n_total[ss$city_size == "Big Cities" & ss$year == 2020])
+
+#Indore
+Indore_plot <- c(63.8, 90.3, 92.6, 93.18, 94.126)
+
+##Assigning Labels
+year_plotlabels <- c("2016", "2017", "2018", "2019", "2020")
+
+label <- c("Small Cities", "Medium Cities", "Big Cities")
+##Constructing dataframes
+small_plot <- c(mean_small_2016, mean_small_2017, mean_small_2018, mean_small_2019, mean_small_2020)
+small_plotdta <- data.frame (small_plot, year_plotlabels)
+
+medium_plot <- c(mean_medium_2016, mean_medium_2017, mean_medium_2018, mean_medium_2019, mean_medium_2020)
+medium_plotdta <- data.frame (medium_plot, year_plotlabels)
+
+Big_plot <- c(mean_Big_2016, mean_Big_2017, mean_Big_2018, mean_Big_2019, mean_Big_2020)
+Big_plotdta <- data.frame (Big_plot, year_plotlabels)
+
+Indore_plotdta <- data.frame (Indore_plot, year_plotlabels)
+
+##Plotting cities and mean scores
+plot_cities <- ggplot() + geom_line(data = small_plotdta, aes(y = small_plot, x = year_plotlabels,group = 1), colour = "blue") + 
+geom_line(data = medium_plotdta, aes(y = medium_plot, x = year_plotlabels, group = 1),  colour = "green" ) +
+geom_line(data = Big_plotdta, aes(y = Big_plot, x = year_plotlabels, group = 1), colour = "Black") +
+geom_line(data = Indore_plotdta, aes(y = Indore_plot, x = year_plotlabels, group = 1), linetype = "dotted", colour = "red") +
+geom_point(aes(y = small_plot, x = year_plotlabels), data = small_plotdta, colour = "blue", size = 1.5) +
+geom_point(aes(y = medium_plot, x = year_plotlabels), data = medium_plotdta, colour = "green", size = 1.5) +
+geom_point(aes(y = Big_plot, x = year_plotlabels), data = Big_plotdta, colour = "Black", size = 1.5) +
+geom_point(aes(y = Indore_plot, x = year_plotlabels), data = Indore_plotdta, colour = "red", size = 1.5) +
+scale_y_continuous(limits = c(40,100)) +
+labs( x = "Year", y = "Average Scores", subtitle = "Swachh Survekshan: Average Scores by City Size between 2016 and 2020") +
+scale_colour_manual(name = "check", values = c("Group1", "Group2")) +
+newtheme
+
+plot_cities
 
 ```
+
+
+`
+
 
