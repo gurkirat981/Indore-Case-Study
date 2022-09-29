@@ -28,6 +28,7 @@ library(ggpubr)
 library(kableExtra)
 library (readxl)
 library (ggrepel)
+library (tidyr)
 ```
 
 ```{r}
@@ -92,11 +93,12 @@ mean_Big_2019 <- mean(ss$n_total[ss$city_size == "Big Cities" & ss$year == 2019]
 mean_Big_2020 <- mean(ss$n_total[ss$city_size == "Big Cities" & ss$year == 2020])
 
 #Indore
-Indore_plot <- c(63.8, 90.3, 92.6, 93.18, 94.126)
+year <- c("2016", "2017", "2018", "2019", "2020")
+mean_values <- c(63.8, 90.3, 92.6, 93.18, 94.126)
+city_size <- c("Indore", "Indore", "Indore", "Indore", "Indore")
+Indore_plotdta <- data.frame (year, city_size, mean_values)
 
 ##Assigning Labels
-year_plotlabels <- c("2016", "2017", "2018", "2019", "2020")
-
 label <- c("Small Cities", "Medium Cities", "Big Cities")
 ##Constructing dataframes
 small_plot <- c(mean_small_2016, mean_small_2017, mean_small_2018, mean_small_2019, mean_small_2020)
@@ -108,7 +110,6 @@ medium_plotdta <- data.frame (medium_plot, year_plotlabels)
 Big_plot <- c(mean_Big_2016, mean_Big_2017, mean_Big_2018, mean_Big_2019, mean_Big_2020)
 Big_plotdta <- data.frame (Big_plot, year_plotlabels)
 
-Indore_plotdta <- data.frame (Indore_plot, year_plotlabels)
 
 ##Plotting cities and mean scores
 plot_cities <- ggplot() + geom_line(data = small_plotdta, aes(y = small_plot, x = year_plotlabels,group = 1), colour = "blue") + 
@@ -121,13 +122,132 @@ geom_point(aes(y = Big_plot, x = year_plotlabels), data = Big_plotdta, colour = 
 geom_point(aes(y = Indore_plot, x = year_plotlabels), data = Indore_plotdta, colour = "red", size = 1.5) +
 scale_y_continuous(limits = c(40,100)) +
 labs( x = "Year", y = "Average Scores", subtitle = "Swachh Survekshan: Average Scores by City Size between 2016 and 2020") +
-scale_colour_manual(name = "check", values = c("Group1", "Group2")) +
 newtheme
 
 plot_cities
 
 ```
 
+
+```{r}
+##Average scores of cities by population size
+
+#Cities by Population size
+ss <- ss %>% 
+mutate(city_size = ifelse(pop2011 > 100000 & pop2011 < 300000, "Small Cities", ifelse(pop2011 > 300000 & pop2011 < 1000000, "Medium Cities", "Big Cities")))
+
+#Indore
+year <- c("2016", "2017", "2018", "2019", "2020")
+mean_values <- c(63.8, 90.3, 92.6, 93.18, 94.126)
+city_size <- c("Indore", "Indore", "Indore", "Indore", "Indore")
+Indore_plotdta <- data.frame (year, city_size, mean_values)
+
+#Estimating means by city_size and year
+ss_citysize <- ss %>% 
+group_by(year, city_size) %>% 
+summarise(small_mean = mean(n_total[city_size == "Small Cities"]), medium_mean=mean(n_total[city_size == "Medium Cities"]),  big_mean=mean(n_total[city_size == "Big Cities"])) %>%
+  ungroup()  
+
+ss_citysize[is.na(ss_citysize)] <- 0
+
+#Merging indore averages with grouped data
+city_ss <- ss_citysize %>% 
+mutate(mean_values=rowSums(.[3:5]))  %>% 
+dplyr::select (year, city_size, mean_values) %>% 
+add_row(Indore_plotdta)
+
+#Plotting Average Scores by city_size and year
+cities_plot <- ggplot(city_ss, aes(x=year, y=mean_values, colour= city_size, group = city_size)) + 
+    geom_line(position=position_dodge(0.09)) +
+    geom_point(position=position_dodge(0.09))+
+  scale_y_continuous(limits = c(40,100)) +
+  labs(subtitle = "Swachh Survekshan: Average Scores by City Size between 2016 and 2020", x = "Year", y = "Average Scores") +
+  scale_color_manual(labels = c("Big Cities", "Indore", "Medium Cities", "Small Cities"), values = c("black", "red", "green", "blue")) +
+  newtheme
+
+cities_plot
+
+```
+
+```{r}
+##Indore and Capital Cities
+ss <- ss %>% 
+mutate (`Classification of ULBs` = ifelse(city == "Amaravati" | city == "Itanagar" | city == "Dispur" | city == "Amaravati" | city == "Patna" | city == "Gandhinagar" | city =="Chandigarh" | city == "Shimla" | city == "Ranchi" | city == "Bangalore" | city == "Thiruvananthapuram" | city == "Bhopal" | city == "Mumbai" | city == "Imphal" | city == "Shillong" |city == "Aizawl" | city == "Kohima" | city == "Bhubaneswar" |city == "Chandigarh" | city == "Jaipur" | city == "Gangtok" | city == "Chennai" | city == "Greater Hyderabad" | city == "Agartala" | city == "Lucknow" | city == "Dehradun" | city == "Kolkata" | city == "Port Blair" | city == "Daman" | city == "New Delhi" |  city == "East Delhi" |  city == "North Delhi NDMC" |  city == "South Delhi (SDMC)" |  city == "South Delhi (SDMC)" |  city == "New Delhi (NDMC)" | city == "Bruhat Bengaluru Mahanagara Palike" | city == "Greater Mumbai" | city == "Navi Mumbai" | city == "Srinagar"| city == "Raipur" |city == "Puducherry", "ULBs based out of State/UT Capitals", "Other Cities"))
+
+#Grouping
+ss_capital <- ss %>% 
+group_by(year, `Classification of ULBs` ) %>% 
+summarise(capital_mean = mean(n_total[`Classification of ULBs`  == "ULBs based out of State/UT Capitals"]), noncapital_mean=mean(n_total[`Classification of ULBs`  == "Other Cities"])) %>%
+  ungroup() 
+
+ss_capital[is.na(ss_capital)] <- 0
+
+#Indore
+year <- c("2016", "2017", "2018", "2019", "2020")
+mean_values <- c(63.8, 90.3, 92.6, 93.18, 94.126)
+ClassificationofULBs  <- c("Indore", "Indore", "Indore", "Indore", "Indore")
+
+Indore_Capital <- data.frame (year, ClassificationofULBs , mean_values) %>% 
+dplyr::rename("Classification of ULBs" = ClassificationofULBs)
+
+#Merging indore averages with grouped data
+capital_ss <- ss_capital %>% 
+mutate(mean_values=rowSums(.[3:4]))  %>% 
+dplyr::select (year, `Classification of ULBs` , mean_values) %>% 
+add_row(Indore_Capital)
+
+#Plotting Average Scores by city_size and year
+capital_plot <- ggplot(capital_ss, aes(x=year, y=mean_values, colour= `Classification of ULBs` , group = `Classification of ULBs` )) + 
+    geom_line(position=position_dodge(0.09)) +
+    geom_point(position=position_dodge(0.09))+
+  scale_y_continuous(limits = c(40,100)) +
+  labs(subtitle = "Swachh Survekshan: Average Scores by City Size between 2016 and 2020", x = "Year", y = "Average Scores") +
+  scale_color_manual(labels = c("Indore Municipal Corporation","ULBs based out of Other Cities", "ULBs based out of State/UT Capitals"), values = c("black","blue", "red")) +
+  newtheme
+
+capital_plot
+```
+
+
+```{r}
+#Indore and Metropolitan Cities
+ss <- ss %>% 
+mutate (`Classification of ULBs` = ifelse(city == "Chennai" | city == "Greater Hyderabad" | city == "Kolkata" | city == "New Delhi" |  city == "East Delhi" |  city == "North Delhi NDMC" |  city == "South Delhi (SDMC)" |  city == "South Delhi (SDMC)" |  city == "New Delhi (NDMC)" | city == "Bruhat Bengaluru Mahanagara Palike" | city == "Greater Mumbai" | city == "Navi Mumbai", "ULBs based out of Metropolitan Cities", "Other Cities"))
+
+#Grouping
+ss_metro <- ss %>% 
+group_by(year, `Classification of ULBs` ) %>% 
+summarise(metro_mean = mean(n_total[`Classification of ULBs`  == "ULBs based out of Metropolitan Cities"]), noncapital_mean=mean(n_total[`Classification of ULBs`  == "Other Cities"])) %>%
+  ungroup() 
+
+ss_metro [is.na(ss_metro)] <- 0
+
+#Indore
+year <- c("2016", "2017", "2018", "2019", "2020")
+mean_values <- c(63.8, 90.3, 92.6, 93.18, 94.126)
+ClassificationofULBs  <- c("Indore", "Indore", "Indore", "Indore", "Indore")
+
+Indore_Metro <- data.frame (year, ClassificationofULBs , mean_values) %>% 
+dplyr::rename("Classification of ULBs" = ClassificationofULBs)
+
+#Merging indore averages with grouped data
+metro_ss <- ss_metro %>% 
+mutate(mean_values=rowSums(.[3:4]))  %>% 
+dplyr::select (year, `Classification of ULBs` , mean_values) %>% 
+add_row(Indore_Metro)
+
+#Plotting Average Scores by city_size and year
+metro_plot <- ggplot(metro_ss, aes(x=year, y=mean_values, colour= `Classification of ULBs` , group = `Classification of ULBs` )) + 
+    geom_line(position=position_dodge(0.09)) +
+    geom_point(position=position_dodge(0.09))+
+  scale_y_continuous(limits = c(40,100)) +
+  labs(subtitle = "Swachh Survekshan: Average Scores by City Size between 2016 and 2020", x = "Year", y = "Average Scores") +
+  scale_color_manual(labels = c("Indore Municipal Corporation","ULBs based out of Other Cities", "ULBs based out of Metropolitan Cities"), values = c("black","blue", "red")) +
+  newtheme
+
+metro_plot
+
+```
 
 `
 
