@@ -69,7 +69,7 @@ ss <- ss %>%
 ##Average scores of cities by population size
 
 #Cities by Population size
-ss <- ss %>% 
+ss_size <- ss %>% 
 mutate(`Classification of ULBs` = ifelse(pop2011 > 100000 & pop2011 < 300000, "Small Cities", ifelse(pop2011 > 300000 & pop2011 < 1000000, "Medium Cities", "Big Cities")))
 
 #Indore
@@ -82,7 +82,7 @@ Indore_plotdta <- data.frame (year, ClassificationofULBs, mean_values) %>%
 dplyr::rename("Classification of ULBs" = ClassificationofULBs)
 
 #Estimating means by city_size and year
-ss_citysize <- ss %>% 
+ss_citysize <- ss_size %>% 
 group_by(year, `Classification of ULBs`) %>% 
 summarise(small_mean = mean(n_total[`Classification of ULBs` == "Small Cities"]), medium_mean=mean(n_total[`Classification of ULBs` == "Medium Cities"]),  big_mean=mean(n_total[`Classification of ULBs` == "Big Cities"])) %>%
   ungroup()  
@@ -108,16 +108,16 @@ cities_plot
 
 ```
 
-```{r}
-##Indore and Capital Cities
-##Alternate Cities: Mysuru, Madurai Corp, Ahmadabad, Surat, Visakhapatnam, Vijaywada, Pune, Guwahati, Ghaziabad, Jamshedpur, Ambikapur, Ujjain, Nagpur, Kota, Jamshedpur, Karnal, Bathinda
+```{r, echo = FALSE, fig.height=4 ,fig.width=10, warning=FALSE}
+##Indore, Capital Cities & other high-performing cities (excluding State/UT capitals)
+##high-performing cities: Mysuru, Madurai Corp, Ahmadabad, Surat, Visakhapatnam, Vijaywada, Pune, Guwahati, Ghaziabad, Jamshedpur, Ambikapur, Ujjain, Nagpur, Kota, Jamshedpur, Karnal, Bathinda
 
-ss <- ss %>% 
+ss_cap <- ss %>%  
 mutate (`Classification of ULBs` = ifelse(city == "Amaravati" | city == "Itanagar" | city == "Dispur" | city == "Amaravati" | city == "Patna" | city == "Gandhinagar" | city =="Chandigarh" | city == "Shimla" | city == "Ranchi" | city == "Bangalore" | city == "Thiruvananthapuram" | city == "Bhopal" | city == "Mumbai" | city == "Imphal" | city == "Shillong" |city == "Aizawl" | city == "Kohima" | city == "Bhubaneswar" |city == "Chandigarh" | city == "Jaipur" | city == "Gangtok" | city == "Chennai" | city == "Greater Hyderabad" | city == "Agartala" | city == "Lucknow" | city == "Dehradun" | city == "Kolkata" | city == "Port Blair" | city == "Daman" | city == "New Delhi" |  city == "East Delhi" |  city == "North Delhi NDMC" |  city == "South Delhi (SDMC)" |  city == "South Delhi (SDMC)" |  city == "New Delhi (NDMC)" | city == "Bruhat Bengaluru Mahanagara Palike" | city == "Greater Mumbai" | city == "Navi Mumbai" | city == "Srinagar"| city == "Raipur" |city == "Puducherry", "ULBs based out of State/UT Capitals", 
                                           ifelse(city == "Mysuru" | city == "Madurai Corp" | city == "Ahmedabad" | city == "Surat" | city == "Visakhapatnam" | city == "GVMC Visakhapatnam" | city =="Vijayawada" | city == "Pune" | city == "Ghaziabad" | city == "Jamshedpur" | city == "Ambikapur" | city == "Ujjain" | city == "Nagpur" | city == "Kota" | city == "Karnal"| city == "Bathinda"| city == "Coimbatore", "Non Capitals", "Other Cities")))
 
 #Grouping
-ss_capital <- ss %>% 
+ss_capital <- ss_cap %>% 
 group_by(year, `Classification of ULBs` ) %>% 
 summarise(capital_mean = mean(n_total[`Classification of ULBs`  == "ULBs based out of State/UT Capitals"]), noncapital_mean=mean(n_total[`Classification of ULBs`  == "Non Capitals"]), other_mean=mean(n_total[`Classification of ULBs`  == "Other Cities"])) %>%
   ungroup() 
@@ -134,7 +134,7 @@ dplyr::rename("Classification of ULBs" = ClassificationofULBs)
 
 #Merging indore averages with grouped data
 capital_ss <- ss_capital %>% 
-mutate(mean_values=rowSums(.[3:4]))  %>% 
+mutate(mean_values=rowSums(.[3:5]))  %>% 
 dplyr::select (year, `Classification of ULBs` , mean_values) %>% 
 add_row(Indore_Capital)%>% 
 filter (!`Classification of ULBs` == "Other Cities")
@@ -144,12 +144,13 @@ capital_plot <- ggplot(capital_ss, aes(x=year, y=mean_values, colour= `Classific
     geom_line(position=position_dodge(0.09)) +
     geom_point(position=position_dodge(0.09))+
   scale_y_continuous(limits = c(40,100)) +
-  labs(subtitle = "Swachh Survekshan: Indore and Capital Cities", x = "Year", y = "Average Scores") +
-  scale_color_manual(labels = c("Indore Municipal Corporation", "ULBs based out of State/UT Capitals"), values = c("black","blue", "red")) +
+  labs(subtitle = "Swachh Survekshan: Indore & Capital Cities", x = "Year", y = "Average Scores") +
+  scale_color_manual(labels = c("Indore Municipal Corporation", "ULBs based out of selected high-performing cities (excluding state/UT capitals)", "ULBs based out of State/UT Capitals"), values = c("black","blue", "red")) +
   newtheme
 
 capital_plot
 ```
+
 
 
 ```{r}
@@ -173,11 +174,16 @@ ClassificationofULBs  <- c("Indore", "Indore", "Indore", "Indore", "Indore")
 Indore_Metro <- data.frame (year, ClassificationofULBs , mean_values) %>% 
 dplyr::rename("Classification of ULBs" = ClassificationofULBs)
 
+#Merging capital cities with grouped data
+metro_capital <- capital_ss %>% 
+filter (`Classification of ULBs` == "ULBs based out of State/UT Capitals")
+
 #Merging indore averages with grouped data
 metro_ss <- ss_metro %>% 
 mutate(mean_values=rowSums(.[3:4]))  %>% 
 dplyr::select (year, `Classification of ULBs` , mean_values) %>% 
 add_row(Indore_Metro) %>% 
+add_row(metro_capital) %>% 
 filter (!`Classification of ULBs` == "Other Cities")
 
 
@@ -186,67 +192,13 @@ metro_plot <- ggplot(metro_ss, aes(x=year, y=mean_values, colour= `Classificatio
     geom_line(position=position_dodge(0.1)) +
     geom_point(position=position_dodge(0.1))+
   scale_y_continuous(limits = c(40,100)) +
-  labs(subtitle = "Swachh Survekshan: Indore & Metropolitan Cities", x = "Year", y = "Average Scores") +
-  scale_color_manual(labels = c("Indore Municipal Corporation", "ULBs based out of Metropolitan Cities"), values = c("black", "red")) +
+  labs(subtitle = "Swachh Survekshan: Indore, Metropolitan Cities & State/UT Capitals", x = "Year", y = "Average Scores") +
+  scale_color_manual(labels = c("Indore Municipal Corporation", "ULBs based out of Metropolitan Cities", "ULBs based out of State/UT Capitals"), values = c("black", "red", "blue")) +
   newtheme
 
 metro_plot
 
 ```
 
-
-```{r}
-#I: Indore and Selected ULBs (Surat, Vishakapatnam)
-
-selected_cities1 <- ss %>% 
-mutate(city = as.character(city)) %>% 
-filter (city == "Surat" | city ==  "Indore" | city == "GVMC Visakhapatnam" | city == "Visakhapatnam")%>% 
-mutate(city = ifelse(city=="GVMC Visakhapatnam", "Visakhapatnam", city))
-
-cities_selected1 <- selected_cities1 %>% 
-group_by(city, year) %>% 
-summarise(mean_scores = n_total) %>% 
-rename ("ULBs" = city)
-
-
-#Plotting Average Scores by city_size and year
-scity_plot1 <- ggplot(cities_selected1, aes(x=year, y=mean_scores, colour= `ULBs` , group = `ULBs` )) + 
-    geom_line(position=position_dodge(0.09)) +
-    geom_point(position=position_dodge(0.09))+
-  scale_y_continuous(limits = c(60,100)) +
-  labs(subtitle = "Swachh Survekshan: Average Scores by City Size between 2016 and 2020", x = "Year", y = "Average Scores") +
-  scale_color_manual(labels = c("Indore Municipal Corporation", "Surat", "Visakhapatnam"), values = c("red", "black", "green")) +
-  newtheme
-
-scity_plot1
-```
-```{r}
-#II: Indore and Selected ULBs (Mysuru, Ahemdabad)
-selected_cities2 <- ss %>% 
-mutate(city = as.character(city)) %>% 
-filter (city == "Mysuru" | city ==  "Indore" | city == "Ahmedabad")
-
-cities_selected2 <- selected_cities2 %>% 
-group_by(city, year) %>% 
-summarise(mean_scores = n_total) %>% 
-rename ("ULBs" = city)
-
-
-#Plotting Average Scores by city_size and year
-scity_plot2 <- ggplot(cities_selected2, aes(x=year, y=mean_scores, colour= `ULBs` , group = `ULBs` )) + 
-    geom_line(position=position_dodge(0.09)) +
-    geom_point(position=position_dodge(0.09))+
-  scale_y_continuous(limits = c(60,100)) +
-  labs(subtitle = "Swachh Survekshan: Indore, Mysuru, Ahemdabad", x = "Year", y = "Average Scores") +
-  scale_color_manual(labels = c("Indore Municipal Corporation", "Ahmedabad", "Mysuru"), values = c("green", "red", "black")) +
-  newtheme
-
-scity_plot2
-```
-```{r}
-##Alternate Cities: Mysuru, Madurai Corp, Ahmadabad, Surat, Visakhapatnam, Vijaywada, Pune, Guwahati, Ghaziabad, Jamshedpur, Ambikapur, Ujjain, Nagpur, Kota, Jamshedpur, Karnal, Bathinda
-
-
-```
 
 
